@@ -4,6 +4,12 @@ namespace OddsApiSharp.ClientV2.Containers;
 
 public class Tournament
 {
+    [JsonProperty("categoryName", NullValueHandling = NullValueHandling.Ignore)]
+    public string CategoryName { get; set; }
+
+    [JsonProperty("fixtures", NullValueHandling = NullValueHandling.Ignore)]
+    public List<Fixture> Fixtures { get; set; }
+
     [JsonProperty("categorySlug")]
     public string CategorySlug { get; set; }
 

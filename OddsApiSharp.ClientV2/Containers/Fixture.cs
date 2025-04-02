@@ -36,4 +36,7 @@ public partial class Fixture
 
     [JsonProperty("startTime", NullValueHandling = NullValueHandling.Ignore)]
     public long? StartTime { get; set; }
+
+    public string TournamentName { get; set; }
+    public string SportName { get; set; }
 }

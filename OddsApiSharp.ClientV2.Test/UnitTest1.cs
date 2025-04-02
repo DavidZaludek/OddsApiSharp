@@ -5,7 +5,7 @@ namespace OddsApiSharp.ClientV2.Test
 {
     public class Tests
     {
-        private ApiConnection _apiClient;
+        private OddsApiConnection _oddsApiClient;
 
         [SetUp]
         public void Setup()
@@ -14,14 +14,14 @@ namespace OddsApiSharp.ClientV2.Test
                 .AddUserSecrets<OddsApiSettings>()
                 .Build();
 
-            _apiClient = new ApiConnection(Options.Create<OddsApiSettings>(new OddsApiSettings()));
+            _oddsApiClient = new OddsApiConnection(Options.Create<OddsApiSettings>(new OddsApiSettings()));
         }
 
         [Test]
         public void Test1()
         {
 
-            var bookmakers = _apiClient.GetBookmakers();
+            var bookmakers = _oddsApiClient.GetBookmakers();
             
             
             Assert.Pass();

@@ -6,28 +6,24 @@ public class FixtureDataWrapper
     private readonly Fixture _fixtureData;
 
     public event EventHandler<Fixture> FixtureUpdated;
-
-    public FixtureDataWrapper(Fixture fixtureData)
+    
+    public FixtureDataWrapper(Fixture fixtureData, string tournamentName, string sportName)
     {
         _fixtureData = fixtureData;
+        _fixtureData.TournamentName = tournamentName;
+        _fixtureData.SportName = sportName;
     }
 
-    public void HandleWsUpdate(WsMsg updateDataMsg)
+    public void HandleOddsUpdate(WsFixtureData updateDataMsg)
     {
-        if (updateDataMsg.Channel == "fixtures")
-        {
-
-            return;
-        }
-
-        var bookmakerOdds = _fixtureData.Odds.FirstOrDefault(x => x.Bookmaker == updateDataMsg.Data.Bookmaker);
+        var bookmakerOdds = _fixtureData.Odds.FirstOrDefault(x => x.Bookmaker == updateDataMsg.Bookmaker);
 
         if (bookmakerOdds == null)
             return;
 
         var bookmakerOutcomes = bookmakerOdds.Markets.SelectMany(x => x.Outcomes).ToList();
 
-        foreach (var (key, outcomes) in updateDataMsg.Data.Outcomes)
+        foreach (var (key, outcomes) in updateDataMsg.Outcomes)
         {
             foreach (var outcome in outcomes)
             {
@@ -64,5 +60,20 @@ public class FixtureDataWrapper
                     updatedOdds.Price = outcome.Price;
             }
         }
+
+        FixtureUpdated?.Invoke(this, _fixtureData);
+    }
+
+    public void HandleStatusUpdate(WsFixturesStatus wsFixturesStatus)
+    {
+        if (wsFixturesStatus.StatusId.HasValue)
+            _fixtureData.FixtureStatus.StatusId = wsFixturesStatus.StatusId;
+
+        FixtureUpdated?.Invoke(this, _fixtureData);
+    }
+
+    public void Initialized()
+    {
+        FixtureUpdated?.Invoke(this, _fixtureData);
     }
 }

@@ -31,9 +31,6 @@ public partial class WsFixtureData
     [JsonProperty("tournamentId", NullValueHandling = NullValueHandling.Ignore)]
     public long? TournamentId { get; set; }
 
-    [JsonProperty("statusId", NullValueHandling = NullValueHandling.Ignore)]
-    public long? StatusId { get; set; }
-
     [JsonProperty("updatedAt", NullValueHandling = NullValueHandling.Ignore)]
     public DateTimeOffset? UpdatedAt { get; set; }
 }

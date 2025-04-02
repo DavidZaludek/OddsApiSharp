@@ -1,20 +1,26 @@
 ﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using OddsApiSharp.ClientV2;
 using OddsApiSharp.ClientV2.Containers;
 
-public class ApiConnection
+namespace OddsApiSharp.ClientV2;
+
+public class OddsApiConnection
 {
     private readonly IOptions<OddsApiSettings> _oddsApiSettings;
     private readonly HttpClient _httpClient;
-
-    public ApiConnection(IOptions<OddsApiSettings> oddsApiSettings)
+    
+    public OddsApiConnection(IOptions<OddsApiSettings> oddsApiSettings)
     {
         _oddsApiSettings = oddsApiSettings;
         _httpClient = new HttpClient
         {
             BaseAddress = new Uri(_oddsApiSettings.Value.ApiUrl)
         };
+    }
+
+    private string GenerateBookmakerParam(List<string>? bookmakers)
+    {
+        return bookmakers == null ? _oddsApiSettings.Value.AllowedBookmakers.Aggregate((x, y) => x + "," + y) : bookmakers.Aggregate((x, y) => x + "," + y);
     }
 
     private async Task<T?> GetAsync<T>(string endpoint)
@@ -52,8 +58,8 @@ public class ApiConnection
     public Task<object?> GetFixturesToday()
         => GetAsync<object>("/api/v2/fixtures/today");
 
-    public Task<OddsResponseWrapper?> GetFixturesLive()
-        => GetAsync<OddsResponseWrapper>("/api/v2/fixtures/live");
+    public Task<List<LiveEventsWrapper>?> GetFixturesLive()
+        => GetAsync<List<LiveEventsWrapper>>("/api/v2/fixtures/live");
 
     public Task<object?> GetFixtures(int? tournamentId = null, int? sportId = null, int? participantId = null, int? playerId = null, string bookmaker = null, bool overlap = true)
     {
@@ -90,29 +96,35 @@ public class ApiConnection
         return GetAsync<object>($"/api/v2/historical/fixtures?{string.Join("&", query)}");
     }
 
-    public Task<object?> GetHistoricalOdds(string fixtureId, string bookmakers)
-        => GetAsync<object>($"/api/v2/historical/odds?fixtureId={fixtureId}&bookmakers={bookmakers}");
+    public Task<object?> GetHistoricalOdds(string fixtureId, List<string> bookmakers = null)
+        => GetAsync<object>(
+            $"/api/v2/historical/odds?fixtureId={fixtureId}&bookmakers={GenerateBookmakerParam(bookmakers)}");
 
-    public Task<OddsResponseWrapper?> GetOdds(string fixtureId, string bookmakers)
-        => GetAsync<OddsResponseWrapper>($"/api/v2/odds?fixtureId={fixtureId}&bookmakers={bookmakers}");
+    public async Task<OddsResponseWrapper?> GetOdds(string fixtureId, List<string>? bookmakers = null)
+    {
+        var res = await GetAsync<List<OddsResponseWrapper>>(
+            $"/api/v2/odds?fixtureId={fixtureId}&bookmakers={GenerateBookmakerParam(bookmakers)}");
 
-    public Task<object?> GetOdds3Sec(string sportId, string bookmakers)
-        => GetAsync<object>($"/api/v2/odds/3sec?sportId={sportId}&bookmakers={bookmakers}");
+        return res?.FirstOrDefault();
+    }
 
-    public Task<object?> GetOdds10Sec(string sportId, string bookmakers)
-        => GetAsync<object>($"/api/v2/odds/10sec?sportId={sportId}&bookmakers={bookmakers}");
+    public Task<object?> GetOdds3Sec(string sportId, List<string>? bookmakers = null)
+        => GetAsync<object>($"/api/v2/odds/3sec?sportId={sportId}&bookmakers={GenerateBookmakerParam(bookmakers)}");
 
-    public Task<object?> GetOdds30Sec(string sportId, string bookmakers)
-        => GetAsync<object>($"/api/v2/odds/30sec?sportId={sportId}&bookmakers={bookmakers}");
+    public Task<object?> GetOdds10Sec(string sportId, List<string>? bookmakers = null)
+        => GetAsync<object>($"/api/v2/odds/10sec?sportId={sportId}&bookmakers={GenerateBookmakerParam(bookmakers)}");
 
-    public Task<object?> GetOddsTournament(int tournamentId, string bookmaker)
+    public Task<object?> GetOdds30Sec(string sportId, List<string>? bookmakers = null)
+        => GetAsync<object>($"/api/v2/odds/30sec?sportId={sportId}&bookmakers={GenerateBookmakerParam(bookmakers)}");
+
+    public Task<object?> GetOddsTournament(int tournamentId, string bookmaker = null)
         => GetAsync<object>($"/api/v2/odds/tournament?tournamentId={tournamentId}&bookmaker={bookmaker}");
 
     public Task<object?> GetTopLiquidityFixtures(string bookmaker = null)
         => GetAsync<object>($"/api/v2/liquidity/fixtures/top100{(string.IsNullOrEmpty(bookmaker) ? "" : $"?bookmaker={bookmaker}")}");
 
-    public Task<object?> GetTopLiquidityMarkets(string sportId, string bookmakers)
-        => GetAsync<object>($"/api/v2/liquidity/markets/top100?sportId={sportId}&bookmakers={bookmakers}");
+    public Task<object?> GetTopLiquidityMarkets(string sportId, List<string>? bookmakers = null)
+        => GetAsync<object>($"/api/v2/liquidity/markets/top100?sportId={sportId}&bookmakers={GenerateBookmakerParam(bookmakers)}");
 
     public Task<object?> GetMapping(string bookmaker, string bookmakerFixtureIds)
         => GetAsync<object>($"/api/v2/mapping?bookmaker={bookmaker}&bookmakerFixtureIds={bookmakerFixtureIds}");
